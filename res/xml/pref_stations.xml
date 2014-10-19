@@ -1,7 +1,8 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
     <!-- Checkboxes for the different gas stations -->
-    <PreferenceCategory android:title="stations_preferences" >
+    <PreferenceCategory android:title="stations_preferences"
+        android:key="stations_list" >
         <CheckBoxPreference
             android:defaultValue="true"
             android:key="preem_checkbox"

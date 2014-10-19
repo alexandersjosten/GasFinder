@@ -39,21 +39,19 @@ public class SettingsActivity extends PreferenceActivity {
 		// use the older PreferenceActivity APIs.
 
 		// Add Time/Distance preference
-		PreferenceCategory header = new PreferenceCategory(this);
-		header.setTitle(R.string.time_distance_header);
-		getPreferenceScreen().addPreference(header);
 		addPreferencesFromResource(R.xml.pref_time_distance);
 		
-		header = new PreferenceCategory(this);
-		header.setTitle(R.string.time_distance_header);
+		// Add Stations preference
+		PreferenceCategory header = new PreferenceCategory(this);
+		header.setTitle(R.string.stations_header);
 		getPreferenceScreen().addPreference(header);
-		addPreferencesFromResource(R.xml.pref_time_distance);
+		addPreferencesFromResource(R.xml.pref_stations);
 		
 		bindPreferenceSummaryToValue(findPreference("time_distance_list"));
-		//bindPreferenceSummaryToValue(findPreference("preem_checkbox"));
-		//bindPreferenceSummaryToValue(findPreference("shell_checkbox"));
-		//bindPreferenceSummaryToValue(findPreference("st1_checkbox"));
-		//bindPreferenceSummaryToValue(findPreference("gas_checkbox"));
+		/*bindPreferenceSummaryToValue(findPreference("preem_checkbox"));
+		bindPreferenceSummaryToValue(findPreference("shell_checkbox"));
+		bindPreferenceSummaryToValue(findPreference("st1_checkbox"));
+		bindPreferenceSummaryToValue(findPreference("gas_checkbox"));*/
 	}
 
 	/** {@inheritDoc} */
@@ -157,45 +155,31 @@ public class SettingsActivity extends PreferenceActivity {
 		@Override
 		public void onCreate(Bundle savedInstanceState) {
 			super.onCreate(savedInstanceState);
-			addPreferencesFromResource(R.xml.pref_time_distance);
-
-			// Bind the summaries of EditText/List/Dialog/Ringtone preferences
-			// to their values. When their values change, their summaries are
-			// updated to reflect the new value, per the Android Design
-			// guidelines.
-			bindPreferenceSummaryToValue(findPreference("example_text"));
-			bindPreferenceSummaryToValue(findPreference("example_list"));
-		}
-	}
-	/*
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public static class NotificationPreferenceFragment extends
-	PreferenceFragment {
-		@Override
-		public void onCreate(Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
-			addPreferencesFromResource(R.xml.pref_notification);
-
-			// Bind the summaries of EditText/List/Dialog/Ringtone preferences
-			// to their values. When their values change, their summaries are
-			// updated to reflect the new value, per the Android Design
-			// guidelines.
-			bindPreferenceSummaryToValue(findPreference("notifications_new_message_ringtone"));
-		}
-	}
-	*/
-	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
-	public static class TimeDistancePreferenceFragment extends PreferenceFragment {
-		@Override
-		public void onCreate(Bundle savedInstanceState) {
-			super.onCreate(savedInstanceState);
 			addPreferencesFromResource(R.xml.pref_stations);
 
 			// Bind the summaries of EditText/List/Dialog/Ringtone preferences
 			// to their values. When their values change, their summaries are
 			// updated to reflect the new value, per the Android Design
 			// guidelines.
-			bindPreferenceSummaryToValue(findPreference("sync_frequency"));
+			bindPreferenceSummaryToValue(findPreference("preem_checkbox"));
+			bindPreferenceSummaryToValue(findPreference("shell_checkbox"));
+			bindPreferenceSummaryToValue(findPreference("st1_checkbox"));
+			bindPreferenceSummaryToValue(findPreference("gas_checkbox"));
+		}
+	}
+
+	@TargetApi(Build.VERSION_CODES.HONEYCOMB)
+	public static class TimeDistancePreferenceFragment extends PreferenceFragment {
+		@Override
+		public void onCreate(Bundle savedInstanceState) {
+			super.onCreate(savedInstanceState);
+			addPreferencesFromResource(R.xml.pref_time_distance);
+
+			// Bind the summaries of EditText/List/Dialog/Ringtone preferences
+			// to their values. When their values change, their summaries are
+			// updated to reflect the new value, per the Android Design
+			// guidelines.
+			bindPreferenceSummaryToValue(findPreference("time_distance_list"));
 		}
 	}
 }
