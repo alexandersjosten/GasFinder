@@ -23,8 +23,5 @@
     <string name="shell_summary">Shell stations</string>
     <string name="st1_title">st1</string>
     <string name="st1_summary">st1 stations</string>
-    
-    <string name="stations_header">Gas stations</string>
-    <string name="time_distance_header">Time or distance</string>
 
 </resources>
