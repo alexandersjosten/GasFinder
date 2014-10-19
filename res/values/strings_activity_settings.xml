@@ -1,0 +1,30 @@
+<resources>
+
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+    <string name="time_distance_title">Shortest time or distance</string>
+    <string-array name="time_distance_list_titles">
+        <item>Shortest time</item>
+        <item>Shortest distance</item>
+    </string-array>
+    <string-array name="time_distance_list_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+    
+    <!-- Strings for the different stations choice -->
+    <string name="gas_stations_title">Gas stations to look for</string>
+    <string name="natural_gas_title">Natural Gas</string>
+    <string name="natural_gas_summary">Natural Gas stations</string>
+    <string name="preem_title">Preem</string>
+    <string name="preem_summary">Preem stations</string>
+    <string name="shell_title">Shell</string>
+    <string name="shell_summary">Shell stations</string>
+    <string name="st1_title">st1</string>
+    <string name="st1_summary">st1 stations</string>
+    
+    <string name="stations_header">Gas stations</string>
+    <string name="time_distance_header">Time or distance</string>
+
+</resources>

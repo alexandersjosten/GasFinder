@@ -1,0 +1,10 @@
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <!-- These settings headers are only used on tablets. -->
+    <header
+        android:fragment="sjosten.android.gasfinder.SettingsActivity$StationsPreferenceFragment"
+        android:title="@string/stations_header" />
+    <header
+        android:fragment="sjosten.android.gasfinder.SettingsActivity$TimeDistancePreferenceFragment"
+        android:title="@string/time_distance_header" />
+</preference-headers>

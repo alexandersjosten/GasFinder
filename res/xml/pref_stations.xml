@@ -1,0 +1,27 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <!-- Checkboxes for the different gas stations -->
+    <PreferenceCategory android:title="stations_preferences" >
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="preem_checkbox"
+            android:summary="@string/preem_summary"
+            android:title="@string/preem_title" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="st1_checkbox"
+            android:summary="@string/st1_summary"
+            android:title="@string/st1_title" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="shell_checkbox"
+            android:summary="@string/shell_summary"
+            android:title="@string/shell_title" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="gas_checkbox"
+            android:summary="@string/natural_gas_summary"
+            android:title="@string/natural_gas_title" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
