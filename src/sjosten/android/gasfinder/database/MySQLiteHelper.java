@@ -1,4 +1,4 @@
-package sjosten.android.gasfinder;
+package sjosten.android.gasfinder.database;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
