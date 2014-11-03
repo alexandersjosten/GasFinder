@@ -1,6 +1,7 @@
 package sjosten.android.gasfinder;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import sjosten.android.gasfinder.database.GasStationsDAO;
@@ -9,10 +10,13 @@ import sjosten.android.gasfinder.parser.PanicException;
 import sjosten.android.gasfinder.parser.Parser;
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.graphics.Color;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -24,21 +28,26 @@ import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.Polyline;
+import com.google.android.gms.maps.model.PolylineOptions;
 
 public class MainActivity extends Activity implements LocationListener,
 		GooglePlayServicesClient.ConnectionCallbacks,
-		GooglePlayServicesClient.OnConnectionFailedListener {
+		GooglePlayServicesClient.OnConnectionFailedListener, OnMarkerClickListener {
 
 	private GoogleMap map;
-	private Marker currentLocation;
+	//private Marker currentLocation;
+	private Location currentLocation;
 	private GasStationsDAO datasourceObject;
 	private LocationRequest locationRequest;
 	private LocationClient locationClient;
 	private boolean updatesRequested;
+	private List<Polyline> activePolylines;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -64,9 +73,9 @@ public class MainActivity extends Activity implements LocationListener,
 		
 		map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map))
 				.getMap();
+		map.setOnMarkerClickListener(this);
 
 		if (map != null) {
-			/*
 			List<GasStation> dbStations = datasourceObject.getAllStations();
 			for(GasStation station : dbStations) {
 				map.addMarker(new MarkerOptions().position(
@@ -74,7 +83,7 @@ public class MainActivity extends Activity implements LocationListener,
 						station.getCoordinate().getLatitude(),
 						station.getCoordinate().getLongitude()
 					)).title("Preem"));
-			}*/
+			}
 			
 			locationRequest = LocationRequest.create();
 			locationRequest.setInterval(Constants.UPDATE_INTERVAL);
@@ -84,6 +93,7 @@ public class MainActivity extends Activity implements LocationListener,
 			updatesRequested = true;
 			
 			map.setMyLocationEnabled(true);
+			activePolylines = new ArrayList<>();
 			
 			locationClient = new LocationClient(this, this, this);
 		}
@@ -165,18 +175,8 @@ public class MainActivity extends Activity implements LocationListener,
 
 	@Override
 	public void onLocationChanged(Location location) {
-		if(currentLocation == null) {
-			currentLocation = map.addMarker(new MarkerOptions().position(
-				new LatLng(
-					location.getLatitude(),
-					location.getLongitude()
-				)).title("Your location"));
-		}
-		else {
-			currentLocation.setPosition(
-				new LatLng(location.getLatitude(), location.getLongitude())
-			);
-		}
+		// Finally, update the current location
+		currentLocation = location;
 	}
 
 	@Override
@@ -194,5 +194,121 @@ public class MainActivity extends Activity implements LocationListener,
 	@Override
 	public void onDisconnected() {
 		Toast.makeText(this, R.string.disconnected_error, Toast.LENGTH_LONG).show();
+	}
+
+	@Override
+	public boolean onMarkerClick(Marker marker) {
+		String url = makeURL(
+			new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
+			marker.getPosition()
+		);
+		JsonAsyncTask jsonAsync = new JsonAsyncTask(url);
+		jsonAsync.execute();
+		return false;
+	}
+	
+	private String makeURL(LatLng from, LatLng to) {
+		return Constants.URL_DIRECTION + "origin=" + from.latitude + "," + 
+				from.longitude + "&destination=" + to.latitude + "," + to.longitude;
+	}
+	
+	
+	private class JsonAsyncTask extends AsyncTask<Void, Void, String> {
+		private ProgressDialog progress;
+		private String url;
+		
+		public JsonAsyncTask(String url) {
+			this.url = url;
+		}
+		
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			progress = new ProgressDialog(MainActivity.this);
+			progress.setMessage("Fetching route for you, please wait...");
+			progress.setIndeterminate(true);
+			progress.show();
+		}
+		
+		@Override
+		protected String doInBackground(Void... params) {
+			return JSONParser.getJSONFromURL(url);
+		}
+		
+		@Override
+		protected void onPostExecute(String result) {
+			super.onPostExecute(result);
+			progress.hide();
+			if(result != null) {
+				for(Polyline p : activePolylines) {
+					p.remove();
+				}
+				activePolylines.clear();
+				drawPath(result);
+			}
+		}
+	}
+
+
+	public void drawPath(String result) {
+		String polylines = JSONParser.getEncodedString(result);
+		List<LatLng> latLngs = decodePolylines(polylines);
+		for(int i = 0; i < latLngs.size() - 1; i++) {
+			LatLng origin = latLngs.get(i);
+			LatLng destination = latLngs.get(i + 1);
+			activePolylines.add(
+				map.addPolyline(
+					new PolylineOptions().add(origin, destination)
+						.width(Constants.POLYLINE_WIDTH)
+						.color(Color.BLUE)
+						.geodesic(true)
+				)
+			);
+		}
+	}
+	
+	// This is very inspired by the example at http://jeffreysambells.com/2010/05/27/decoding-polylines-from-google-maps-direction-api-with-java
+	private List<LatLng> decodePolylines(String polylines) {
+		List<LatLng> resultList = new ArrayList<>();
+		int index = 0;
+		int polylinesLength = polylines.length();
+		int latitude = 0;
+		int longitude = 0;
+		
+		while(index < polylinesLength) {
+			int b = -1;
+			int shift = 0;
+			int result = 0;
+			do {
+				b = polylines.charAt(index) - 63;
+				result |= (b & 0x1f) << shift;
+				shift += 5;
+				index++;
+			} while(b >= 0x20);
+			
+			int dLat = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+			latitude += dLat;
+			
+			shift = 0;
+			result = 0;
+			do {
+				b = polylines.charAt(index) - 63;
+				result |= (b & 0x1f) << shift;
+				shift += 5;
+				index++;
+			} while(b >= 0x20);
+			
+			int dLng = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
+			longitude += dLng;
+			
+			resultList.add(
+				new LatLng(
+					((double)latitude / 1E5),
+					((double)longitude / 1E5)
+				)
+			);
+		}
+		
+		return resultList;
 	}
 }

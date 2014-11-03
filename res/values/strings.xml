@@ -15,6 +15,7 @@
     <string name="about_content">
         This app is for you who might need to find gas stations (both natural gas and
         regular gas and diesel) in Sweden.
+        \nTo navigate to a gas station, simply click on the marker you want to navigate to.
         \nYou can download KML-files and install them for the app by clicking Download.
         Note that the KML-files must contain a Placemark-tag with name-tag and Point-tag.
         \nThe best way to ensure valid KML-files is to use the site from Download.
