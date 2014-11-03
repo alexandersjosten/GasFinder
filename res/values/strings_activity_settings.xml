@@ -4,6 +4,7 @@
 
     <!-- Strings related to Settings -->
     <string name="time_distance_title">Shortest time or distance</string>
+
     <string-array name="time_distance_list_titles">
         <item>Shortest time</item>
         <item>Shortest distance</item>
@@ -12,15 +13,59 @@
         <item>0</item>
         <item>1</item>
     </string-array>
-    
+
+    <string name="radius_distance_title">Stations within which radius (km)</string>
+
+    <string-array name="radius_distance_list_titles">
+        <item>All</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+        <item>110</item>
+        <item>120</item>
+        <item>130</item>
+        <item>140</item>
+        <item>150</item>
+    </string-array>
+    <string-array name="radius_distance_list_values">
+        <item>All</item>
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+        <item>40</item>
+        <item>50</item>
+        <item>60</item>
+        <item>70</item>
+        <item>80</item>
+        <item>90</item>
+        <item>100</item>
+        <item>110</item>
+        <item>120</item>
+        <item>130</item>
+        <item>140</item>
+        <item>150</item>
+    </string-array>
+
     <!-- Strings for the different stations choice -->
+    <string name="gas_stations_key">stations_list</string>
     <string name="gas_stations_title">Gas stations to look for</string>
+    <string name="natural_gas_key">gas_checkbox</string>
     <string name="natural_gas_title">Natural Gas</string>
     <string name="natural_gas_summary">Natural Gas stations</string>
+    <string name="preem_key">preem_checkbox</string>
     <string name="preem_title">Preem</string>
     <string name="preem_summary">Preem stations</string>
+    <string name="shell_key">shell_checkbox</string>
     <string name="shell_title">Shell</string>
     <string name="shell_summary">Shell stations</string>
+    <string name="st1_key">st1_checkbox</string>
     <string name="st1_title">st1</string>
     <string name="st1_summary">st1 stations</string>
 

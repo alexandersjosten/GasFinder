@@ -20,5 +20,9 @@
         \nThe best way to ensure valid KML-files is to use the site from Download.
         \nYou can also get a navigation to the closest stations by either distance or traveling time.
     </string>
+    
+    <!-- Rest... -->
+    <string name="disconnected_error">Location client dropped out. Sorry.</string>
+    <string name="no_connection_error">Location service can\'t be connected to.</string>
 
 </resources>
