@@ -12,4 +12,7 @@ public class Constants {
 	
 	// Line width for the polyline
 	public static final int POLYLINE_WIDTH = 10;
+	
+	// Key for the saving instance
+	public static final String SAVE_KEY = "json";
 }

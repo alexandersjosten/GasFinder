@@ -3,6 +3,7 @@ package sjosten.android.gasfinder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import sjosten.android.gasfinder.database.GasStationsDAO;
 import sjosten.android.gasfinder.parser.GasStation;
@@ -13,11 +14,13 @@ import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -48,6 +51,11 @@ public class MainActivity extends Activity implements LocationListener,
 	private LocationClient locationClient;
 	private boolean updatesRequested;
 	private List<Polyline> activePolylines;
+	private String jsonResult;
+	
+	// This is for the inner class, but need to call dismiss in onPause in order to not
+	// get an exception
+	private ProgressDialog progress;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -76,7 +84,36 @@ public class MainActivity extends Activity implements LocationListener,
 		map.setOnMarkerClickListener(this);
 
 		if (map != null) {
-			List<GasStation> dbStations = datasourceObject.getAllStations();
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+			List<String> stationNames = datasourceObject.getAllNames();
+			List<GasStation> dbStations = new ArrayList<>();
+			
+			for(int i = 0; i < stationNames.size(); i++) {
+				String name = stationNames.get(i);
+				switch(name.toLowerCase(Locale.getDefault())) {
+				case "preem":
+					if(preferences.getBoolean(getString(R.string.preem_key), false)) {
+						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
+					}
+					break;
+				case "st1":
+					if(preferences.getBoolean(getString(R.string.st1_key), false)) {
+						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
+					}
+					break;
+				case "shell":
+					if(preferences.getBoolean(getString(R.string.shell_key), false)) {
+						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
+					}
+					break;
+				case "gasmackar":
+					if(preferences.getBoolean(getString(R.string.natural_gas_key), false)) {
+						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
+					}
+					break;
+				}
+			}
+			
 			for(GasStation station : dbStations) {
 				map.addMarker(new MarkerOptions().position(
 					new LatLng(
@@ -100,6 +137,21 @@ public class MainActivity extends Activity implements LocationListener,
 	}
 	
 	@Override
+	protected void onSaveInstanceState(Bundle outState) {
+		super.onSaveInstanceState(outState);
+		
+		if(jsonResult != null) {
+			outState.putString(Constants.SAVE_KEY, jsonResult);
+		}
+	}
+	
+	@Override
+	protected void onRestoreInstanceState(Bundle savedInstanceState) {
+		super.onRestoreInstanceState(savedInstanceState);
+		
+	}
+	
+	@Override
 	protected void onStart() {
 		super.onStart();
 		updatesRequested = true;
@@ -110,12 +162,19 @@ public class MainActivity extends Activity implements LocationListener,
 	protected void onResume() {
 		datasourceObject.open();
 		updatesRequested = true;
+		
+		if(jsonResult != null) {
+			drawPath(jsonResult);			
+		}
 		super.onResume();
 	}
 	
 	@Override
 	protected void onPause() {
 		datasourceObject.close();
+		if(progress != null) {
+			progress.dismiss();
+		}
 		super.onPause();
 	}
 	
@@ -214,7 +273,6 @@ public class MainActivity extends Activity implements LocationListener,
 	
 	
 	private class JsonAsyncTask extends AsyncTask<Void, Void, String> {
-		private ProgressDialog progress;
 		private String url;
 		
 		public JsonAsyncTask(String url) {
@@ -238,19 +296,22 @@ public class MainActivity extends Activity implements LocationListener,
 		@Override
 		protected void onPostExecute(String result) {
 			super.onPostExecute(result);
-			progress.hide();
+			progress.dismiss();
 			if(result != null) {
-				for(Polyline p : activePolylines) {
-					p.remove();
-				}
-				activePolylines.clear();
+				jsonResult = result;
 				drawPath(result);
 			}
 		}
 	}
 
 
-	public void drawPath(String result) {
+	private void drawPath(String result) {
+		// Start by removing the old path..
+		for(Polyline p : activePolylines) {
+			p.remove();
+		}
+		activePolylines.clear();
+		
 		String polylines = JSONParser.getEncodedString(result);
 		List<LatLng> latLngs = decodePolylines(polylines);
 		for(int i = 0; i < latLngs.size() - 1; i++) {
