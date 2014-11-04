@@ -1,25 +1,12 @@
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-    <!-- List preference for time or distance choice -->
-    <PreferenceCategory android:title="@string/time_distance_title" >
-        <ListPreference
-            android:defaultValue="0"
-            android:entries="@array/time_distance_list_titles"
-            android:entryValues="@array/time_distance_list_values"
-            android:key="time_distance_list"
-            android:negativeButtonText="@null"
-            android:positiveButtonText="@null"
-            android:summary="%s"
-            android:title="@string/time_distance_title" />
-    </PreferenceCategory>
-    
     <!-- List preference for radius of distance -->
     <PreferenceCategory android:title="@string/radius_distance_title" >
         <ListPreference
-            android:defaultValue="0"
+            android:defaultValue="All"
             android:entries="@array/radius_distance_list_titles"
             android:entryValues="@array/radius_distance_list_values"
-            android:key="radius_distance_list"
+            android:key="@string/radius_key"
             android:negativeButtonText="@null"
             android:positiveButtonText="@null"
             android:summary="%s"

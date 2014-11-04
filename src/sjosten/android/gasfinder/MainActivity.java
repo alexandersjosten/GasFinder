@@ -2,8 +2,10 @@ package sjosten.android.gasfinder;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import sjosten.android.gasfinder.database.GasStationsDAO;
 import sjosten.android.gasfinder.parser.GasStation;
@@ -30,6 +32,7 @@ import com.google.android.gms.common.GooglePlayServicesClient;
 import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnMarkerClickListener;
 import com.google.android.gms.maps.MapFragment;
@@ -46,17 +49,19 @@ public class MainActivity extends Activity implements LocationListener,
 	private GoogleMap map;
 	//private Marker currentLocation;
 	private Location currentLocation;
-	private GasStationsDAO datasourceObject;
+	protected static GasStationsDAO datasourceObject;
 	private LocationRequest locationRequest;
 	private LocationClient locationClient;
 	private boolean updatesRequested;
 	private List<Polyline> activePolylines;
+	private List<Marker> activeMarkers;
 	private String jsonResult;
 	
 	// This is for the inner class, but need to call dismiss in onPause in order to not
 	// get an exception
 	private ProgressDialog progress;
-
+	private boolean zoomed;
+	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -83,73 +88,21 @@ public class MainActivity extends Activity implements LocationListener,
 				.getMap();
 		map.setOnMarkerClickListener(this);
 
-		if (map != null) {
-			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-			List<String> stationNames = datasourceObject.getAllNames();
-			List<GasStation> dbStations = new ArrayList<>();
-			
-			for(int i = 0; i < stationNames.size(); i++) {
-				String name = stationNames.get(i);
-				switch(name.toLowerCase(Locale.getDefault())) {
-				case "preem":
-					if(preferences.getBoolean(getString(R.string.preem_key), false)) {
-						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
-					}
-					break;
-				case "st1":
-					if(preferences.getBoolean(getString(R.string.st1_key), false)) {
-						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
-					}
-					break;
-				case "shell":
-					if(preferences.getBoolean(getString(R.string.shell_key), false)) {
-						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
-					}
-					break;
-				case "gasmackar":
-					if(preferences.getBoolean(getString(R.string.natural_gas_key), false)) {
-						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
-					}
-					break;
-				}
-			}
-			
-			for(GasStation station : dbStations) {
-				map.addMarker(new MarkerOptions().position(
-					new LatLng(
-						station.getCoordinate().getLatitude(),
-						station.getCoordinate().getLongitude()
-					)).title("Preem"));
-			}
-			
-			locationRequest = LocationRequest.create();
-			locationRequest.setInterval(Constants.UPDATE_INTERVAL);
-			locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-			locationRequest.setFastestInterval(Constants.FAST_UPDATE_INTERVAL);
-			
-			updatesRequested = true;
-			
-			map.setMyLocationEnabled(true);
-			activePolylines = new ArrayList<>();
-			
-			locationClient = new LocationClient(this, this, this);
-		}
-	}
-	
-	@Override
-	protected void onSaveInstanceState(Bundle outState) {
-		super.onSaveInstanceState(outState);
+		locationRequest = LocationRequest.create();
+		locationRequest.setInterval(Constants.UPDATE_INTERVAL);
+		locationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+		locationRequest.setFastestInterval(Constants.FAST_UPDATE_INTERVAL);
 		
-		if(jsonResult != null) {
-			outState.putString(Constants.SAVE_KEY, jsonResult);
-		}
-	}
-	
-	@Override
-	protected void onRestoreInstanceState(Bundle savedInstanceState) {
-		super.onRestoreInstanceState(savedInstanceState);
+		updatesRequested = true;
 		
+		map.setMyLocationEnabled(true);
+		activePolylines = new ArrayList<>();
+		activeMarkers = new ArrayList<>();
+		
+		zoomed = false;
+		locationClient = new LocationClient(this, this, this);
 	}
+
 	
 	@Override
 	protected void onStart() {
@@ -166,12 +119,12 @@ public class MainActivity extends Activity implements LocationListener,
 		if(jsonResult != null) {
 			drawPath(jsonResult);			
 		}
+		
 		super.onResume();
 	}
 	
 	@Override
 	protected void onPause() {
-		datasourceObject.close();
 		if(progress != null) {
 			progress.dismiss();
 		}
@@ -227,6 +180,23 @@ public class MainActivity extends Activity implements LocationListener,
 			});
 			
 			alertDialog.show();
+			return true;
+		case R.id.action_distance:
+			if(activeMarkers.isEmpty()) {
+				Toast.makeText(this, R.string.no_markers_found, Toast.LENGTH_LONG).show();
+			}
+			else {
+				getClosestMarker(false);
+			}
+			return true;
+		case R.id.action_time:
+			if(activeMarkers.isEmpty()) {
+				Toast.makeText(this, R.string.no_markers_found, Toast.LENGTH_LONG).show();
+			}
+			else {
+				getClosestMarker(true);
+			}
+			return true;
 		default:
 			return super.onOptionsItemSelected(item);
 		}
@@ -234,8 +204,25 @@ public class MainActivity extends Activity implements LocationListener,
 
 	@Override
 	public void onLocationChanged(Location location) {
-		// Finally, update the current location
-		currentLocation = location;
+		if(currentLocation == null || 
+				!(currentLocation.getLatitude() == location.getLatitude() && 
+				  currentLocation.getLongitude() == location.getLongitude())) {
+			currentLocation = location;
+			drawStations();
+			if(!zoomed) { // Simply to zoom once..
+				map.animateCamera(
+					CameraUpdateFactory.newLatLngZoom(
+						new LatLng(
+							currentLocation.getLatitude(),
+							currentLocation.getLongitude()
+						),
+						Constants.MAP_ZOOM
+					)
+				);
+				
+				zoomed = true;
+			}
+		}
 	}
 
 	@Override
@@ -261,7 +248,7 @@ public class MainActivity extends Activity implements LocationListener,
 			new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()),
 			marker.getPosition()
 		);
-		JsonAsyncTask jsonAsync = new JsonAsyncTask(url);
+		JsonAsyncTask jsonAsync = new JsonAsyncTask(url, true);
 		jsonAsync.execute();
 		return false;
 	}
@@ -271,12 +258,26 @@ public class MainActivity extends Activity implements LocationListener,
 				from.longitude + "&destination=" + to.latitude + "," + to.longitude;
 	}
 	
+	private Marker getClosestMarker(boolean time) {
+		Map<String, Marker> map = new HashMap<>();
+		for(Marker marker : activeMarkers) {
+			String url = makeURL(
+				new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude()), 
+				marker.getPosition()
+			);
+			map.put(url, marker);
+		}
+		ShortestTravelTask stt = new ShortestTravelTask(map, time);
+		stt.execute();
+		return null;
+	}
 	
 	private class JsonAsyncTask extends AsyncTask<Void, Void, String> {
 		private String url;
-		
-		public JsonAsyncTask(String url) {
+		private boolean draw;
+		public JsonAsyncTask(String url, boolean draw) {
 			this.url = url;
+			this.draw = draw;
 		}
 		
 		@Override
@@ -299,8 +300,67 @@ public class MainActivity extends Activity implements LocationListener,
 			progress.dismiss();
 			if(result != null) {
 				jsonResult = result;
-				drawPath(result);
+				if(draw) {
+					drawPath(result);					
+				}
 			}
+		}
+	}
+	
+	private class ShortestTravelTask extends AsyncTask<Void, Void, Marker> {
+		private Map<String, Marker> map;
+		private boolean time;
+		public ShortestTravelTask(Map<String, Marker> map, boolean time) {
+			this.map = map;
+			this.time = time;
+		}
+		
+		@Override
+		protected void onPreExecute() {
+			super.onPreExecute();
+			progress = new ProgressDialog(MainActivity.this);
+			if(time) {
+				progress.setMessage("Fetching shortest traveling time for you, please wait...");
+			}
+			else {
+				progress.setMessage("Fetching shortest traveling distance for you, please wait...");
+			}
+			progress.setIndeterminate(true);
+			progress.show();
+		}
+		
+		@Override
+		protected Marker doInBackground(Void... params) {
+			double currentLowest = Double.POSITIVE_INFINITY;
+			Marker currentLowestMarker = null;
+			for(String key : map.keySet()) {
+				String json = JSONParser.getJSONFromURL(key);
+				if(time) {
+					double currentTime = JSONParser.getTravelingTime(json);
+					if(currentTime < currentLowest) {
+						currentLowest = currentTime;
+						currentLowestMarker = map.get(key);
+					}
+				}
+				else {
+					double currentDistance = JSONParser.getTravelingDistance(json);
+					if(currentDistance < currentLowest) {
+						currentLowest = currentDistance;
+						currentLowestMarker = map.get(key);
+					}
+				}
+				
+			}
+			return currentLowestMarker;
+		}
+		
+		@Override
+		protected void onPostExecute(Marker result) {
+			super.onPostExecute(result);
+			progress.dismiss();
+			if(result != null) {
+				onMarkerClick(result);
+			}			
 		}
 	}
 
@@ -371,5 +431,83 @@ public class MainActivity extends Activity implements LocationListener,
 		}
 		
 		return resultList;
+	}
+	
+	private void drawStations() {
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		List<String> stationNames = datasourceObject.getAllNames();
+		List<GasStation> dbStations = new ArrayList<>();
+		String distanceString = preferences.getString(getString(R.string.radius_key), "0");
+		
+		for(Marker marker : activeMarkers) {
+			marker.remove();
+		}
+		
+		activeMarkers.clear();
+				
+		if(distanceString.equals("All")) {
+			for(int i = 0; i < stationNames.size(); i++) {
+				String name = stationNames.get(i);
+				switch(name.toLowerCase(Locale.getDefault())) {
+				case "preem":
+					if(preferences.getBoolean(getString(R.string.preem_key), false)) {
+						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
+					}
+					break;
+				case "st1 sverige":
+					if(preferences.getBoolean(getString(R.string.st1_key), false)) {
+						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
+					}
+					break;
+				case "shell":
+					if(preferences.getBoolean(getString(R.string.shell_key), false)) {
+						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
+					}
+					break;
+				case "gasmackar":
+					if(preferences.getBoolean(getString(R.string.natural_gas_key), false)) {
+						dbStations.addAll(datasourceObject.getAllSpecificStations(name));
+					}
+					break;
+				}
+			}
+		}
+		else {
+			int distance = Integer.parseInt(distanceString);
+			for(int i = 0; i < stationNames.size(); i++) {
+				String name = stationNames.get(i);
+				switch(name.toLowerCase(Locale.getDefault())) {
+				case "preem":
+					if(preferences.getBoolean(getString(R.string.preem_key), false)) {
+						dbStations.addAll(datasourceObject.getAllStationsWithinDistance(name, currentLocation, distance));
+					}
+					break;
+				case "st1 sverige":
+					if(preferences.getBoolean(getString(R.string.st1_key), false)) {
+						dbStations.addAll(datasourceObject.getAllStationsWithinDistance(name, currentLocation, distance));
+					}
+					break;
+				case "shell":
+					if(preferences.getBoolean(getString(R.string.shell_key), false)) {
+						dbStations.addAll(datasourceObject.getAllStationsWithinDistance(name, currentLocation, distance));
+					}
+					break;
+				case "gasmackar":
+					if(preferences.getBoolean(getString(R.string.natural_gas_key), false)) {
+						dbStations.addAll(datasourceObject.getAllStationsWithinDistance(name, currentLocation, distance));
+					}
+					break;
+				}
+			}
+		}
+		
+		
+		for(GasStation station : dbStations) {
+			activeMarkers.add(map.addMarker(new MarkerOptions().position(
+				new LatLng(
+					station.getCoordinate().getLatitude(),
+					station.getCoordinate().getLongitude()
+				)).title(station.getName())));
+		}
 	}
 }

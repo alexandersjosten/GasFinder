@@ -1,6 +1,5 @@
 package sjosten.android.gasfinder;
 
-import android.os.Environment;
 
 public class Constants {
 	// 5000ms == 5s, so update the location every 5 seconds
@@ -19,8 +18,13 @@ public class Constants {
 	public static final String SAVE_KEY = "json";
 	
 	// Address to kml-files
-	public static final String KML_SITE = "https://www.dropbox.com/sh/modmgg8ff4wws4h/AABXscOPQtPrFZWwGYOw8bzRa?dl=0";
+	public static final String KML_SITE = "http://www.student.bth.se/~alsj14/kml_files/index.html";
 	
-	// Path to tmp kml-files
-	public static final String KML_FOLDER = Environment.getExternalStorageDirectory().getPath() + "/gasfinder/tmp_kml/";
+	public static final String KML_FILE = "tmp.kml";
+	
+	// Constant for earth radius
+	public static final int EARTH_RADIUS = 6371;
+	
+	// Zoom value
+	public static final int MAP_ZOOM = 10;
 }

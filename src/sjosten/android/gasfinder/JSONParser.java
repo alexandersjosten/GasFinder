@@ -49,4 +49,34 @@ public class JSONParser {
 			return "";
 		}
 	}
+	
+	public static double getTravelingTime(String json) {
+		try {
+			JSONObject jsonObj = new JSONObject(json);
+			JSONArray routeArray = jsonObj.getJSONArray("routes");
+			JSONObject routes = routeArray.getJSONObject(0);
+			JSONArray legsArray = routes.getJSONArray("legs");
+			JSONObject legs = legsArray.getJSONObject(0);
+			JSONObject distance = legs.getJSONObject("duration");
+			return distance.getDouble("value");
+		} catch (JSONException e) {
+			e.printStackTrace();
+			return 0.0;
+		}
+	}
+	
+	public static double getTravelingDistance(String json) {
+		try {
+			JSONObject jsonObj = new JSONObject(json);
+			JSONArray routeArray = jsonObj.getJSONArray("routes");
+			JSONObject routes = routeArray.getJSONObject(0);
+			JSONArray legsArray = routes.getJSONArray("legs");
+			JSONObject legs = legsArray.getJSONObject(0);
+			JSONObject distance = legs.getJSONObject("distance");
+			return distance.getDouble("value");
+		} catch (JSONException e) {
+			e.printStackTrace();
+			return 0.0;
+		}
+	}
 }

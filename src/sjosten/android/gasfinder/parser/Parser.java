@@ -1,5 +1,6 @@
 package sjosten.android.gasfinder.parser;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -80,10 +81,9 @@ public class Parser {
 	// Parse the file to a Document when parsing KML document
     public static List<GasStation> parseKMLFile(String fileName) {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-
         try {
             DocumentBuilder db = dbf.newDocumentBuilder();
-            return parseDocument(db.parse(fileName));
+            return parseDocument(db.parse(new File(fileName)));
         } catch(ParserConfigurationException | SAXException | IOException | PanicException e) {
             e.printStackTrace();
         }

@@ -3,6 +3,7 @@ package sjosten.android.gasfinder.database;
 import java.util.ArrayList;
 import java.util.List;
 
+import sjosten.android.gasfinder.Constants;
 import sjosten.android.gasfinder.parser.Coordinate;
 import sjosten.android.gasfinder.parser.GasStation;
 import android.content.ContentValues;
@@ -10,6 +11,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.location.Location;
 
 // Data Access Object for the gas stations database
 public class GasStationsDAO {
@@ -80,6 +82,42 @@ public class GasStationsDAO {
 		cursor.moveToFirst();
 		while(!cursor.isAfterLast()) {
 			stations.add(cursorToGasStation(cursor));
+			cursor.moveToNext();
+		}
+		
+		return stations;
+	}
+	
+	public List<GasStation> getAllStationsWithinDistance(String stationName, Location currentLocation, int distance) {
+		List<GasStation> stations = new ArrayList<>();
+		Cursor cursor = database.query(
+			MySQLiteHelper.TABLE_STATIONS,
+			columns,
+			MySQLiteHelper.COLUMN_NAME + " = ?",
+			new String[] {stationName},
+			null,
+			null,
+			null
+		);
+		
+		cursor.moveToFirst();
+		while(!cursor.isAfterLast()) {
+			GasStation currentStation = cursorToGasStation(cursor);
+			
+			double latDistance = Math.toRadians(currentLocation.getLatitude() - currentStation.getCoordinate().getLatitude());
+			double lngDistance = Math.toRadians(currentLocation.getLongitude() - currentStation.getCoordinate().getLongitude());
+			double a = (Math.sin(latDistance / 2) * Math.sin(latDistance / 2)) +
+                    (Math.cos(Math.toRadians(currentLocation.getLatitude()))) *
+                    (Math.cos(Math.toRadians(currentStation.getCoordinate().getLatitude()))) *
+                    (Math.sin(lngDistance / 2)) *
+                    (Math.sin(lngDistance / 2));
+			
+			double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+			double dist = Constants.EARTH_RADIUS * c;
+			
+			if(dist < distance) {
+				stations.add(currentStation);
+			}
 			cursor.moveToNext();
 		}
 		

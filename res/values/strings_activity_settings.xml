@@ -14,6 +14,7 @@
         <item>1</item>
     </string-array>
 
+    <string name="radius_key">radius_distance_list</string>
     <string name="radius_distance_title">Stations within which radius (km)</string>
 
     <string-array name="radius_distance_list_titles">

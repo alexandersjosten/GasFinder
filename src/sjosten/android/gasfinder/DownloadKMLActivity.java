@@ -1,16 +1,18 @@
 package sjosten.android.gasfinder;
 
 import java.io.BufferedInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.List;
 
+import sjosten.android.gasfinder.parser.GasStation;
 import sjosten.android.gasfinder.parser.Parser;
 import android.app.Activity;
+import android.content.Context;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.webkit.DownloadListener;
@@ -53,7 +55,7 @@ public class DownloadKMLActivity extends Activity {
 				conn.connect();
 				
 				InputStream input = new BufferedInputStream(params[0].openStream());
-				OutputStream output = new FileOutputStream(Constants.KML_FOLDER + "tmp.kml");
+				OutputStream output = openFileOutput(Constants.KML_FILE, Context.MODE_PRIVATE);
 				
 				int count = 0;
 				byte[] readBytes = new byte[1024];
@@ -79,7 +81,11 @@ public class DownloadKMLActivity extends Activity {
 				Toast.LENGTH_SHORT
 			).show();
 			
-			Parser.parseKMLFile(Constants.KML_FOLDER + "tmp.kml");
+			List<GasStation> stations = Parser.parseKMLFile(getFilesDir() + "/" + Constants.KML_FILE);
+			for(GasStation station : stations) {
+				MainActivity.datasourceObject.insertGasStation(station);				
+			}
+			finish();
 		}
 		
 	}
