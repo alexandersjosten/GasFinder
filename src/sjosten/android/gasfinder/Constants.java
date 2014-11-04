@@ -1,5 +1,7 @@
 package sjosten.android.gasfinder;
 
+import android.os.Environment;
+
 public class Constants {
 	// 5000ms == 5s, so update the location every 5 seconds
 	public static final long UPDATE_INTERVAL = 5000;
@@ -15,4 +17,10 @@ public class Constants {
 	
 	// Key for the saving instance
 	public static final String SAVE_KEY = "json";
+	
+	// Address to kml-files
+	public static final String KML_SITE = "https://www.dropbox.com/sh/modmgg8ff4wws4h/AABXscOPQtPrFZWwGYOw8bzRa?dl=0";
+	
+	// Path to tmp kml-files
+	public static final String KML_FOLDER = Environment.getExternalStorageDirectory().getPath() + "/gasfinder/tmp_kml/";
 }

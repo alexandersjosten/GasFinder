@@ -78,15 +78,16 @@ public class Parser {
     }
 	
 	// Parse the file to a Document when parsing KML document
-    public static void parseKMLFile(String fileName, InputStream is) {
+    public static List<GasStation> parseKMLFile(String fileName) {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 
         try {
             DocumentBuilder db = dbf.newDocumentBuilder();
-            parseDocument(db.parse(is));
+            return parseDocument(db.parse(fileName));
         } catch(ParserConfigurationException | SAXException | IOException | PanicException e) {
             e.printStackTrace();
         }
+		return null;
     }
 
     // Parse the KML document for the important information

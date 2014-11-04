@@ -49,6 +49,10 @@
             android:name=".SettingsActivity"
             android:label="@string/title_activity_settings" >
         </activity>
+        <activity
+            android:name=".DownloadKMLActivity"
+            android:label="@string/title_activity_download" >
+        </activity>
     </application>
 
 </manifest>

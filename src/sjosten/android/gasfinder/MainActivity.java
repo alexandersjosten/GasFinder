@@ -201,7 +201,7 @@ public class MainActivity extends Activity implements LocationListener,
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()) {
 		case R.id.action_download:
-			
+			startActivity(new Intent(this, DownloadKMLActivity.class));
 			return true;
 		case R.id.action_settings:
 			List<String> stationNames = datasourceObject.getAllNames();
